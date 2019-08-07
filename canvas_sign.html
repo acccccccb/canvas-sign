@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+		<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+		<title>canvas</title>
+		<style>
+			html,body {
+				overflow:hidden;width:100%;height:100%;
+			}
+			.canvasBox {
+				padding:0;
+				border:1px solid #dedede;
+				margin:20px auto;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app" class="container">
+			<div class="col-xs-12 canvasBox">
+				<canvas
+				:width="canvasWidth"
+				:height="canvasHeight"
+				@mousedown="handleMouseDown"
+				@mouseup="handleMouseUp"
+				@mouseleave="handleMouseUp"
+				@mousemove="handleMouseMove"
+				@touchstart="handleTouchStart"
+				@touchmove="handleTouchMove"
+				ref="canvas">您当前浏览器不支持canvas，建议更换浏览器！</canvas>
+			</div>
+			<div class="col-xs-6">
+				<button @click="clearMap" type="button" class="btn btn-warning btn-block">清空</button>
+			</div>
+			<div class="col-xs-6">
+				<button  @click="saveMap" type="button" class="btn btn-primary btn-block">提交</button>
+			</div>
+		</div>
+	</body>
+	<script>
+		new Vue({
+			el:'#app',
+			data(){
+				return {
+					canvasWidth:0,
+					canvasHeight:0,
+					canvas:null,
+					ctx:null,
+					mouseDown:false,
+					map:{
+						startX:0,
+						startY:0,
+						offsetTop:0,// y轴偏移
+						offsetLeft:0,// x轴偏移
+					}
+				}
+			},
+			created(){
+				this.canvasHeight = window.innerHeight-300;
+				this.canvasWidth = window.innerWidth-30;
+			},
+			mounted(){
+				let canvas = this.$refs['canvas'];
+				let ctx=canvas.getContext("2d");
+				this.canvas = canvas;
+				this.ctx = ctx;
+				this.map.offsetTop = canvas.getBoundingClientRect().top;
+				this.map.offsetLeft = canvas.getBoundingClientRect().left;
+				// 抗锯齿
+				let width = canvas.width;
+				let height = canvas.height;
+				if (window.devicePixelRatio) {
+					this.canvas.style.width = width + "px";
+					this.canvas.style.height = height + "px";
+					this.canvas.height = height * window.devicePixelRatio;
+					this.canvas.width = width * window.devicePixelRatio;
+					ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+				}
+			},
+			methods:{
+				// 手机
+				handleTouchStart:function(e){
+					this.map.startX = e.changedTouches[0].clientX-this.map.offsetLeft;
+					this.map.startY = e.changedTouches[0].clientY-this.map.offsetTop;
+				},
+				handleTouchMove:function(e){
+					let x = e.changedTouches[0].clientX-this.map.offsetLeft;
+					let y = e.changedTouches[0].clientY-this.map.offsetTop;
+					this.drowToMap(x,y);
+				},
+				clearMap:function(){
+					this.canvas.width = this.canvasWidth;
+					this.canvas.height = this.canvasHeight;
+				},
+				saveMap:function(){
+					this.canvas.toBlob(function(blob) {
+					  console.log(blob);
+					});
+				},
+				// pc 
+				handleMouseDown:function(e){
+					this.map.startX = e.layerX;
+					this.map.startY = e.layerY;
+					this.mouseDown = true;
+				},
+				handleMouseUp:function(){
+					this.mouseDown = false;
+				},
+				handleMouseMove:function(e){
+					if(this.mouseDown) {
+						console.log(e.layerX);
+						this.drowToMap(e.layerX,e.layerY);
+					}
+				},
+				// 绘制
+				drowToMap:function(x,y){
+					this.ctx.strokeStyle="#10aeff";
+					this.ctx.lineWidth=4;
+					this.ctx.moveTo(this.map.startX,this.map.startY);
+					this.ctx.lineTo(x,y);
+					this.ctx.stroke();
+					this.map.startX = x;
+					this.map.startY = y;
+				},
+			}
+		})
+	</script>
+</html>
